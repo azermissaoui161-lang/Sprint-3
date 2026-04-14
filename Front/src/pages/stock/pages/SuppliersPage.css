@@ -1,0 +1,432 @@
+/* ===== VARIABLES GLOBALES (partagées) ===== */
+:root {
+  --p: #48bb78;
+  --pd: #2f855a;
+  --pl: #c6f6d5;
+  --s: #4299e1;
+  --w: #ed8936;
+  --d: #f56565;
+  --dd: #c53030;
+  --g1: #f7fafc;
+  --g2: #edf2f7;
+  --g3: #e2e8f0;
+  --g4: #cbd5e0;
+  --g5: #a0aec0;
+  --g6: #718096;
+  --g7: #4a5568;
+  --g8: #1a202c;
+  --sm: 0 1px 3px rgba(0,0,0,0.05);
+  --md: 0 4px 6px rgba(0,0,0,0.05);
+  --rs: 6px;
+  --rm: 8px;
+  --rl: 12px;
+  --tr: all 0.2s ease;
+}
+
+/* ===== ONGLET FOURNISSEURS ===== */
+.suppliers-tab {
+  width: 100%;
+}
+
+/* ===== BARRE DE RECHERCHE FOURNISSEURS ===== */
+.suppliers-search-bar {
+  background: #f9fafc;
+  border-radius: 10px;
+  padding: 1.2rem;
+  margin: 1.5rem 0;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+}
+
+#search-supp-name,
+#search-supp-status,
+#search-supp-rating {
+  width: 100%;
+}
+
+.search-row select#search-supp-status,
+.search-row select#search-supp-rating {
+  min-width: 130px;
+}
+
+/* ===== GRILLE DES FOURNISSEURS ===== */
+.suppliers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+/* ===== CARTE FOURNISSEUR ===== */
+.supplier-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease-out;
+}
+
+.supplier-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  border-color: #48bb78;
+}
+
+.supplier-card.inactive {
+  opacity: 0.7;
+  background: #f8fafc;
+  border-color: #cbd5e0;
+}
+
+.supplier-card.inactive:hover {
+  border-color: #f56565;
+}
+
+.supplier-card.inactive .supplier-icon {
+  opacity: 0.5;
+  filter: grayscale(50%);
+}
+
+/* Accessibilité */
+.supplier-card:focus-within {
+  outline: 2px solid #48bb78;
+  outline-offset: 2px;
+}
+
+/* ===== EN-TÊTE CARTE ===== */
+.supplier-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.supplier-icon {
+  font-size: 2rem;
+  background: #ebf8ff;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.supplier-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ===== INFORMATIONS FOURNISSEUR ===== */
+.supplier-info {
+  flex: 1;
+}
+
+.supplier-info h3 {
+  font-size: 1.2rem;
+  margin: 0 0 0.5rem 0;
+  color: #2d3748;
+}
+
+.supplier-info p {
+  margin: 0.4rem 0;
+  font-size: 0.9rem;
+  color: #4a5568;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.supplier-info p strong {
+  min-width: 70px;
+  color: #2d3748;
+}
+
+.supplier-info a {
+  color: #48bb78;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.supplier-info a:hover {
+  color: #2f855a;
+  text-decoration: underline;
+}
+
+/* ===== CONTACT ===== */
+.supplier-contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  background: #f8fafc;
+  padding: 0.8rem;
+  border-radius: 8px;
+  margin: 0.5rem 0;
+}
+
+/* ===== NOTATION (ÉTOILES) ===== */
+.supplier-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.rating-stars {
+  display: inline-flex;
+  gap: 2px;
+  color: #fbbf24;
+  font-size: 1.2rem;
+}
+
+.rating-stars span {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.rating-stars span:last-child {
+  margin-right: 0.3rem;
+}
+
+/* ===== PRODUITS DU FOURNISSEUR ===== */
+.supplier-products {
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.product-count-link {
+  background: none;
+  border: none;
+  color: #48bb78;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.product-count-link:hover {
+  background: #f0fff4;
+  color: #2f855a;
+}
+
+.product-count-link:focus {
+  outline: 2px solid #48bb78;
+  outline-offset: 2px;
+}
+
+.product-count-zero {
+  font-size: 0.8rem;
+  color: var(--g5);
+}
+
+/* Badge fournisseur */
+.supplier-badge {
+  background: #48bb78;
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  margin-left: 0.5rem;
+}
+
+/* ===== ACTIONS CARTE ===== */
+.supplier-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* ===== STATISTIQUES FOURNISSEUR ===== */
+.supplier-stats {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 0.8rem;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.stat-item {
+  flex: 1;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #48bb78;
+  display: block;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #718096;
+  text-transform: uppercase;
+}
+
+/* ===== MODALE PRODUITS PAR FOURNISSEUR ===== */
+.supplier-info-header {
+  background: #f7fafc;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #48bb78;
+}
+
+.supplier-info-header p {
+  margin: 0.3rem 0;
+  color: #2d3748;
+  font-size: 0.95rem;
+}
+
+.supplier-products-list {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+/* ===== TOOLTIP ===== */
+.supplier-tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.supplier-tooltip:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2d3748;
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 10;
+  margin-bottom: 5px;
+}
+
+/* ===== ÉTAT VIDE ===== */
+.suppliers-grid .no-data-message {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  color: #718096;
+  font-size: 1.1rem;
+}
+
+/* ===== ANIMATION CHARGEMENT ===== */
+.supplier-card.loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.supplier-card.loading::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== ALERTES AVEC FOURNISSEUR ===== */
+.alert-item small {
+  display: block;
+  color: #718096;
+  font-size: 0.7rem;
+  margin-top: 0.2rem;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .suppliers-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .supplier-card {
+    padding: 1.2rem;
+  }
+
+  .supplier-info p {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+  }
+
+  .supplier-info p strong {
+    min-width: auto;
+  }
+
+  .supplier-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+
+  .supplier-status {
+    align-self: flex-start;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .suppliers-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ===== MODE SOMBRE ===== */
+@media (prefers-color-scheme: dark) {
+  .supplier-card {
+    background: #1a202c;
+    border-color: #2d3748;
+  }
+
+  .supplier-info h3      { color: #e2e8f0; }
+  .supplier-info p       { color: #a0aec0; }
+  .supplier-info p strong{ color: #cbd5e0; }
+
+  .supplier-info-header {
+    background: #2d3748;
+    color: #e2e8f0;
+  }
+
+  .supplier-products {
+    border-top-color: #2d3748;
+  }
+
+  .product-count-link:hover {
+    background: #2d3748;
+  }
+}

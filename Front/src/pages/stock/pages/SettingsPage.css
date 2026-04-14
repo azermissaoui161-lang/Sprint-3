@@ -1,0 +1,166 @@
+/* ===== VARIABLES GLOBALES (partagées) ===== */
+:root {
+  --p: #48bb78;
+  --pd: #2f855a;
+  --pl: #c6f6d5;
+  --d: #f56565;
+  --dd: #c53030;
+  --g1: #f7fafc;
+  --g2: #edf2f7;
+  --g3: #e2e8f0;
+  --g4: #cbd5e0;
+  --g5: #a0aec0;
+  --g6: #718096;
+  --g7: #4a5568;
+  --g8: #1a202c;
+  --sm: 0 1px 3px rgba(0,0,0,0.05);
+  --rs: 6px;
+  --rm: 8px;
+  --rl: 12px;
+  --tr: all 0.2s ease;
+}
+
+/* ===== CONTENEUR PARAMÈTRES ===== */
+.settings-tab {
+  padding: 1.25rem;
+  background: #fff;
+  border-radius: var(--rl);
+  box-shadow: var(--sm);
+}
+
+.settings-tab h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.25rem;
+  color: var(--g8);
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+/* ===== MESSAGES DE STATUT ===== */
+.settings-message {
+  padding: 0.75rem;
+  border-radius: var(--rs);
+  margin-bottom: 1.25rem;
+  border: 1px solid;
+}
+
+.settings-message.success {
+  background: var(--pl);
+  color: var(--pd);
+  border-color: var(--p);
+}
+
+.settings-message.error {
+  background: #fed7d7;
+  color: var(--dd);
+  border-color: var(--d);
+}
+
+.settings-message.info {
+  background: #e6f7ff;
+  color: #0052cc;
+  border-color: #91d5ff;
+}
+
+/* ===== FORMULAIRE PARAMÈTRES ===== */
+.settings-form {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.settings-section {
+  background: var(--g1);
+  border-radius: var(--rm);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--g3);
+}
+
+.settings-section h3 {
+  font-size: 1.1rem;
+  margin: 0 0 0.9375rem 0;
+  color: var(--g7);
+  padding-bottom: 0.625rem;
+  border-bottom: 1px solid var(--g3);
+}
+
+.settings-hint {
+  font-size: 0.85rem;
+  color: var(--g5);
+  margin: -0.625rem 0 0.9375rem 0;
+}
+
+/* ===== LIGNES & GROUPES ===== */
+.settings-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9375rem;
+  margin-bottom: 0.9375rem;
+}
+
+.settings-group {
+  margin-bottom: 0.625rem;
+}
+
+.settings-group label {
+  display: block;
+  margin-bottom: 0.3125rem;
+  font-weight: 600;
+  color: var(--g7);
+  font-size: 0.9rem;
+}
+
+.settings-group input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 2px solid var(--g3);
+  border-radius: var(--rs);
+  font-size: 0.95rem;
+  outline: 0;
+  transition: var(--tr);
+  box-sizing: border-box;
+}
+
+.settings-group input:focus {
+  border-color: var(--p);
+  box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.1);
+}
+
+.settings-group input:disabled {
+  background: var(--g1);
+  cursor: not-allowed;
+}
+
+.settings-group small {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--g5);
+  margin-top: 0.25rem;
+}
+
+/* ===== ACTIONS ===== */
+.settings-actions {
+  display: flex;
+  gap: 0.9375rem;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--g3);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .settings-row {
+    grid-template-columns: 1fr;
+    gap: 0.625rem;
+  }
+
+  .settings-actions {
+    flex-direction: column;
+  }
+
+  .settings-actions button {
+    width: 100%;
+  }
+}
