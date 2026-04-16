@@ -2,20 +2,36 @@
 const Notification = require('../models/Notification');
 
 // Fonction utilitaire pour créer une notification
+// Fonction utilitaire mise à jour pour éviter les doublons
 const createNotification = async (userId, type, title, message, data = {}, priority = 'moyenne') => {
   try {
-    const notification = await Notification.create({
+    // 1. Nlawjou ken fama notification "non lue" l-nefs el produit
+    const filter = {
       user: userId,
+      'data.productId': data.productId, // On identifie par le produit
+      read: false // Ken "non lue" barka n-badlouha
+    };
+
+    const update = {
       type,
       title,
       message,
       data,
       priority,
-      read: false
-    });
+      createdAt: Date.now() // N-jaddou el wa9t bech tatla3 mel fou9
+    };
+
+    // 2. findOneAndUpdate m3a upsert: true
+    // Ken l9a -> Update. Ken ma l9ash -> Insert.
+    const notification = await Notification.findOneAndUpdate(
+      filter, 
+      update, 
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
     return notification;
   } catch (error) {
-    console.error('Erreur création notification:', error);
+    console.error('Erreur création/update notification:', error);
     return null;
   }
 };

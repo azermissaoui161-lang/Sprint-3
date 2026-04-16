@@ -53,10 +53,10 @@ const productSchema = new mongoose.Schema({
     trim: true
   },
   isActive: {
-    type: Boolean,
-    default: true,
-    index: true
-  }
+  type: Boolean,
+  default: true,
+  index: true
+}
 }, {
   timestamps: true, // ✓ Ajoute createdAt et updatedAt automatiquement
   toJSON: { virtuals: true },

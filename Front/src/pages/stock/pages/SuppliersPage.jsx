@@ -38,6 +38,11 @@ function SuppliersPage() {
   // Modals
   const [modSupplier, setModSupplier] = useState(false)
   const [modSupplierProducts, setModSupplierProducts] = useState(false)
+  // supprimer
+  const [deleteModal, setDeleteModal] = useState({
+  isOpen: false,
+  id: null
+})
 
   // Form
   const [es, setEs] = useState(null)
@@ -119,15 +124,17 @@ function SuppliersPage() {
     }
   }
 
-  const hdlDelSuppRemote = async (id) => {
-    if (!window.confirm("Supprimer ce fournisseur ?")) return
-    try {
-      await supplierService.delete(id)
-      await loadData()
-    } catch (error) {
-      window.alert(extractApiErrorMessage(error, "Impossible de supprimer le fournisseur"))
-    }
+ const hdlDelSuppRemote = async () => {
+  if (!deleteModal.id) return
+
+  try {
+    await supplierService.delete(deleteModal.id)
+    await loadData()
+    setDeleteModal({ isOpen: false, id: null })
+  } catch (error) {
+    window.alert(extractApiErrorMessage(error, "Impossible de supprimer le fournisseur"))
   }
+}
 
   return (
     <div className="suppliers-tab">
@@ -171,7 +178,7 @@ function SuppliersPage() {
           </div>
           <div className="supplier-actions">
             <button className="btn-icon" onClick={() => hdlEditSupp(s)}>✏️</button>
-            <button className="btn-icon" onClick={() => hdlDelSuppRemote(s.id)}>🗑️</button>
+            <button className="btn-icon" onClick={() => setDeleteModal({ isOpen: true, id: s.id })}>🗑️</button>
           </div>
         </article>) : <div className="no-data-message">Aucun fournisseur</div>}
       </div>
@@ -220,8 +227,36 @@ function SuppliersPage() {
               navigate('/stock/products?supplier=' + encodeURIComponent(es.id))
             }}>Voir produits</button>
           </div>
+
         </>}
+        
       </Modal>
+      {deleteModal.isOpen && (
+  <div className="modal-overlay" onClick={() => setDeleteModal({ isOpen: false, id: null })}>
+    <div className="modal-content modal-small" onClick={e => e.stopPropagation()}>
+      
+      <div className="modal-header">
+        <h3>⚠️ Confirmation</h3>
+        <button className="modal-close" onClick={() => setDeleteModal({ isOpen: false, id: null })}>×</button>
+      </div>
+
+      <div className="modal-body">
+        <p>Êtes-vous sûr de vouloir supprimer ce fournisseur ?</p>
+        <p className="text-danger">Cette action est irréversible.</p>
+      </div>
+
+      <div className="modal-footer">
+        <button className="btn-secondary" onClick={() => setDeleteModal({ isOpen: false, id: null })}>
+          Annuler
+        </button>
+        <button className="btn-danger" onClick={hdlDelSuppRemote}>
+          Supprimer
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
     </div>
   )
 }

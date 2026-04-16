@@ -272,7 +272,7 @@ const GenerateReportModal = ({ onClose, onGenerate, loading }) => {
             </div>
           )}
           <div style={{ background: '#ebf8ff', borderRadius: '8px', padding: '12px 16px', fontSize: '13px', color: '#2b6cb0' }}>
-            ℹ️ Le rapport sera généré automatiquement depuis vos données de money flow et de comptes.
+             Le rapport sera généré automatiquement .
           </div>
         </div>
         <div className="modal-footer">
@@ -642,7 +642,6 @@ const handleGenerate = async ({ period, customStart, customEnd, title }) => {
         <button className="btn-primary" style={{ background: '#38a169' }} onClick={() => setShowGenerateModal(true)}>
           ⚡ Générer un rapport financier
         </button>
-        <button className="btn-primary" onClick={() => openModal('add')}>+ Nouveau rapport manuel</button>
       </div>
 
       {/* Filters */}
@@ -685,7 +684,6 @@ const handleGenerate = async ({ period, customStart, customEnd, title }) => {
             </div>
             <div className="report-actions">
               <button className="btn-icon" title="Voir" onClick={() => setViewReport(r)}>👁️</button>
-              <button className="btn-icon" title="Modifier" onClick={() => openModal('edit', r)}>✏️</button>
               <button className="btn-icon" title="Télécharger PDF" onClick={() => handleReportDownload(r)}>PDF</button>
               <button className="btn-icon delete" title="Supprimer" onClick={() => openModal('delete', r)}>🗑️</button>
             </div>
@@ -720,27 +718,7 @@ const handleGenerate = async ({ period, customStart, customEnd, title }) => {
         <ReportViewModal report={viewReport} onClose={() => setViewReport(null)} />
       )}
 
-      {modal.isOpen && modal.mode !== 'delete' && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{modal.mode === 'add' ? '➕ Nouveau rapport' : '✏️ Modifier le rapport'}</h3>
-              <button className="modal-close" onClick={closeModal}>×</button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group"><label>Titre *</label><input type="text" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} required /></div>
-              <div className="form-group"><label>Description</label><textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} rows="4" /></div>
-              <div className="form-group"><label>Date *</label><input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} required /></div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={closeModal}>Annuler</button>
-              <button className="btn-primary" style={{ background: '#4299e1' }} onClick={modal.mode === 'add' ? handleAdd : handleUpdate}>
-                {modal.mode === 'add' ? 'Ajouter' : 'Modifier'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      
 
       {modal.isOpen && modal.mode === 'delete' && (
         <div className="modal-overlay" onClick={closeModal}>

@@ -15,8 +15,19 @@ import Modal from '../../../components/common/Modal'
 import StatusBadge from '../../../components/common/StatusBadge'
 import FormField from '../../../components/common/FormField'
 
-const STATUS = { IN_STOCK: "en stock", LOW_STOCK: "stock faible", OUT_OF_STOCK: "rupture" }
+const STATUS = { 
+  IN_STOCK: "en stock", 
+  LOW_STOCK: "stock faible", 
+  OUT_OF_STOCK: "rupture" 
+};
 
+// 2. El function elli testa3mel el constantes
+const getComputedStatus = (stock) => {
+  const s = Number(stock); // N-thabtou ennou numéro
+  if (s <= 0) return STATUS.OUT_OF_STOCK;
+  if (s < 10) return STATUS.LOW_STOCK;
+  return STATUS.IN_STOCK;
+};
 function ProductsPage() {
   const [searchParams] = useSearchParams()
 
@@ -39,17 +50,27 @@ function ProductsPage() {
   const loadData = useCallback(async () => {
     try {
       const [productRes, categoryRes, supplierRes] = await Promise.all([
-        productService.getAll({ limit: 200 }),
+        productService.getAll({ limit: 500 }), // Zid el limit bech tjibhom l-kol
         categoryService.getAll({ limit: 200 }),
         supplierService.getAll({ limit: 200 }),
       ])
-      setProd(pickList(productRes, ['products', 'data']).map(mapProductToUi))
-      setCat(pickList(categoryRes, ['categories', 'data']).map(mapCategoryToUi))
-      setSupp(pickList(supplierRes, ['suppliers', 'data']).map(mapSupplierToUi))
+      
+      const mappedProducts = pickList(productRes, ['products', 'data']).map(p => {
+        const product = mapProductToUi(p);
+        // FORCE THE STATUS BASED ON STOCK
+        return { 
+          ...product, 
+          status: getComputedStatus(product.stock) 
+        };
+      });
+
+      setProd(mappedProducts);
+      setCat(pickList(categoryRes, ['categories', 'data']).map(mapCategoryToUi));
+      setSupp(pickList(supplierRes, ['suppliers', 'data']).map(mapSupplierToUi));
     } catch (error) {
-      console.error('ProductsPage load error:', error)
+      console.error('ProductsPage load error:', error);
     }
-  }, [])
+  }, []);
 
   useEffect(() => { loadData() }, [loadData])
 

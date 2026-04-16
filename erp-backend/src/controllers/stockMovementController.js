@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const StockMovement = require('../models/StockMovement');
 const Product = require('../models/Product');
+const { createNotification } = require('../controllers/notificationController'); // Thabbet mel path
 const {
   abortOptionalTransaction,
   commitOptionalTransaction,
@@ -180,30 +181,19 @@ exports.addExit = async (req, res) => {
   try {
     const { productId, quantity, reason, notes } = req.body;
 
-    // Validations
-    if (!productId) {
-      return res.status(400).json({ message: 'ID produit requis' });
-    }
-    if (!quantity || parseInt(quantity) <= 0) {
-      return res.status(400).json({ message: 'Quantité valide requise' });
+    if (!productId || !quantity || parseInt(quantity) <= 0) {
+      return res.status(400).json({ message: 'Données invalides' });
     }
 
     const product = await withOptionalSession(Product.findById(productId), session);
-    if (!product) {
-      throw new Error('Produit non trouvé');
-    }
+    if (!product) throw new Error('Produit non trouvé');
 
-    // Vérifier stock suffisant
     const qty = parseInt(quantity);
     if (product.stock < qty) {
-      return res.status(400).json({ 
-        message: 'Stock insuffisant',
-        currentStock: product.stock,
-        requested: qty
-      });
+      return res.status(400).json({ message: 'Stock insuffisant', currentStock: product.stock });
     }
 
-    // Créer le mouvement
+    // 1. Créer le mouvement
     const movement = new StockMovement({
       productId: product._id,
       product: product.name,
@@ -214,31 +204,45 @@ exports.addExit = async (req, res) => {
       reason: reason || 'sale',
       createdBy: req.user?._id
     });
-
     await movement.save(getSessionOptions(session));
 
-    // Mettre à jour le stock
-    const oldStock = product.stock;
+    // 2. Mettre à jour le stock
     product.stock -= qty;
-    product.updatedAt = Date.now();
-    product.updatedBy = req.user?._id;
     await product.save(getSessionOptions(session));
+
+    // 3. TRIGGER ALERTS
+    const newStock = product.stock;
+    console.log(`--- Vérification alertes pour ${product.name} (Stock: ${newStock}) ---`);
+
+    if (newStock <= 10) {
+      const type = newStock <= 5 ? 'stock_faible' : 'produit_epuise';
+      const title = newStock <= 5 ? '⚠️ Alerte Stock Faible' : '❌ Zone Critique';
+      
+      // On utilise req.user?._id pour éviter le crash
+      const notification = await createNotification(
+        req.user?._id || null, 
+        type,
+        title,
+        `Le produit ${product.name} est à ${newStock} unités.`,
+        { productId: product._id, stock: newStock }
+      );
+
+      if (notification) {
+        console.log("✅ Notification insérée en base !");
+      } else {
+        console.log("❌ createNotification a échoué.");
+      }
+    }
 
     await commitOptionalTransaction(session);
 
-    // Log pour audit
-    console.log(`✅ Sortie stock: ${qty} x ${product.name} (${oldStock} → ${product.stock})`);
-
     res.status(201).json({
       movement: formatMovement(movement),
-      product: {
-        id: product._id,
-        name: product.name,
-        stock: product.stock,
-        status: product.status
-      }
+      product: { id: product._id, stock: product.stock }
     });
+
   } catch (error) {
+    console.error("❌ Erreur addExit:", error.message);
     await abortOptionalTransaction(session);
     res.status(400).json({ message: error.message });
   } finally {

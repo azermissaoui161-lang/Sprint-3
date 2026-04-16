@@ -10,34 +10,26 @@ import {
 } from '../../../utils/frontendApiAdapters'
 
 function AlertsPage() {
-  const [prod, setProd] = useState([])
-  const [supp, setSupp] = useState([])
-  const [notifications, setNotifications] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [prod, setProd] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // 1. Fetch Notifications - Thabbet ennou el data jaya s7i7a
   const fetchNotifications = async () => {
     try {
       const res = await notificationService.getAll();
       const data = res.data || (Array.isArray(res) ? res : []);
-      setNotifications(data);
+      // N-khalliw ken el notifications mta3 el stock
+      setNotifications(data.filter(n => n.type === 'stock_faible' || n.type === 'produit_epuise'));
     } catch (err) {
       console.error("Erreur fetch notifications:", err);
     }
   };
 
-  // 2. Load Page Data
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [productRes, supplierRes] = await Promise.all([
-        productService.getAll({ limit: 500 }),
-        supplierService.getAll({ limit: 500 }),
-      ]);
-      
+      const productRes = await productService.getAll({ limit: 500 });
       setProd(pickList(productRes, ['products', 'data']).map(mapProductToUi));
-      setSupp(pickList(supplierRes, ['suppliers', 'data']).map(mapSupplierToUi));
-      
       await fetchNotifications();
     } catch (error) {
       console.error('AlertsPage load error:', error);
@@ -48,11 +40,12 @@ function AlertsPage() {
 
   useEffect(() => { loadData() }, [loadData]);
 
-  // 3. Mark as Read in DB
   const handleMarkAsRead = async (notifId) => {
     try {
       await notificationService.markAsRead(notifId);
-      await fetchNotifications(); // Recharger après modif
+      setNotifications(prev => prev.map(n => 
+        (n._id === notifId) ? { ...n, read: true } : n
+      ));
     } catch (err) {
       console.error("Erreur markAsRead:", err);
     }
@@ -60,79 +53,76 @@ function AlertsPage() {
 
   if (loading) return <div className="loader">Chargement...</div>;
 
-  // Logic categories
+  // HNA EL FIX: N-branchiw el notification m3a el data mta3 el produit
+  const alertsData = notifications.map(n => {
+    const productDetail = prod.find(p => String(p.id) === String(n.data?.productId));
+    return {
+      ...n,
+      productName: productDetail ? productDetail.name : "Produit Inconnu",
+      currentStock: n.data?.stock
+    };
+  });
+
   const categories = [
-    { title: "Stock faible", key: "faible", products: prod.filter(p => p.stock > 0 && p.stock < 5), icon: "⚠️", cls: "warning" },
-    { title: "Rupture", key: "rupture", products: prod.filter(p => p.stock <= 0), icon: "❌", cls: "danger" }
+    { title: "❌ Rupture de Stock ", key: "stock_faible", items: alertsData.filter(a => a.type === 'stock_faible') },
+    { title: "⚠️ Zone Critique", key: "produit_epuise", items: alertsData.filter(a => a.type === 'produit_epuise') }
   ];
 
-  return (
-    <div className="alerts-tab">
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h2>⚠️ Alertes stock</h2>
-        <button className="btn-small" onClick={loadData}>🔄 Synchroniser</button>
+ 
+   return (
+    <div className="page-content">
+      <div className="page-header">
+        <h2 className="page-title">⚠️ Alertes de Stock</h2>
+        <p className="page-subtitle">Suivi en temps réel des produits en rupture ou seuil critique</p>
       </div>
 
       <div className="alerts-container">
-        {categories.map(s => (
-          <section key={s.key} className="alerts-section">
-            <h3>{s.title} ({s.products.length})</h3>
+        {categories.map(section => (
+          <div key={section.key} className="alerts-section">
+            <h3>{section.title}</h3>
+            
             <div className="alerts-list">
-              {s.products.length > 0 ? (
-                s.products.map(p => {
-                  // MATCHING LOGIC: On cherche la notification par productId ou par nom dans le message
-                  const notif = notifications.find(n => 
-                    (n.data && n.data.productId === p.id) || 
-                    (n.message && n.message.includes(p.name))
-                  );
-                  
-                  const isRead = notif ? notif.read : false;
-
-                  return (
-                    <article 
-                      key={p.id} 
-                      className={`alert-item ${s.cls} ${isRead ? 'alert-read' : ''}`}
-                      style={isRead ? { opacity: 0.5 } : {}}
-                    >
-                      <div className="alert-icon">{s.icon}</div>
-                      <div className="alert-content">
-                        <strong>{p.name}</strong>
-                        <span>Stock: {p.stock}</span>
-                        <small>Fournisseur: {supp.find(sup => sup.id === p.supplierId)?.name || '-'}</small>
-                      </div>
-
-                      <div className="alert-actions">
-                        {/* El bouton yarja3 lena */}
-                        {notif ? (
-                          <button 
-                            className="btn-small" 
-                            style={{ 
-                              background: isRead ? '#718096' : '#48bb78', 
-                              color: 'white', 
-                              cursor: isRead ? 'default' : 'pointer' 
-                            }}
-                            onClick={() => !isRead && handleMarkAsRead(notif._id || notif.id)}
-                            disabled={isRead}
-                          >
-                            {isRead ? 'Lu ✅' : 'Marquer Lu'}
-                          </button>
-                        ) : (
-                          /* Ken mafamech Notif fel BD, n-affichiw bouton manuel bech n-creyiw wa7da (optionnel) */
-                          <span style={{ fontSize: '10px', color: '#a0aec0' }}>Non synchronisé</span>
-                        )}
-                      </div>
-                    </article>
-                  );
-                })
+              {section.items.length === 0 ? (
+                <div className="no-alerts">
+                  <p>Aucune alerte dans cette catégorie</p>
+                </div>
               ) : (
-                <p className="no-alerts">Aucun produit</p>
+                section.items.map(notif => (
+                  <div 
+                    key={notif._id} 
+                    className={`alert-item ${notif.type === 'stock_faible' ? 'warning' : 'danger'}`}
+                    style={{ opacity: notif.read ? 0.6 : 1 }}
+                  >
+                    <div className="alert-icon">
+                      {notif.type === 'stock_faible' ? '❌' : '⚠️'}
+                    </div>
+
+                    <div className="alert-content">
+                      <strong>{notif.productName}</strong>
+                      <span>
+                        Stock actuel: <b>{notif.currentStock}</b> units. 
+                        <br />
+                        <small>{new Date(notif.createdAt).toLocaleDateString()} à {new Date(notif.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                      </span>
+                    </div>
+
+                    <div className="alert-actions">
+                      <button 
+                        onClick={() => handleMarkAsRead(notif._id)}
+                        disabled={notif.read}
+                        className={notif.read ? "btn-read-icon" : "btn-action-icon"}
+                        title={notif.read ? "Déjà lu" : "Marquer comme lu"}
+                      >
+                        {notif.read ? '✅' : '✔️'}
+                      </button>
+                    </div>
+                  </div>
+                ))
               )}
             </div>
-          </section>
+          </div>
         ))}
       </div>
     </div>
-  );
-}
-
+  )}
 export default AlertsPage;

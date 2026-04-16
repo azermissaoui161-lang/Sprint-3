@@ -72,7 +72,8 @@ exports.getAll = async (req, res) => {
     } = req.query;
 
     // Construire le filtre
-    const filter = {};
+    const filter = { isActive: true }; 
+
     if (category) filter.category = category;
     if (status) filter.status = status;
     if (search) {
@@ -487,72 +488,43 @@ exports.delete = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Validation de l'ID
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'ID produit invalide' });
-    }
-
     const product = await withOptionalSession(Product.findById(id), session);
-    if (!product) {
-      return res.status(404).json({ message: 'Produit non trouvé' });
-    }
+    if (!product) return res.status(404).json({ message: 'Produit non trouvé' });
 
-    // Vérifier s'il y a des mouvements récents (moins de 24h)
-    const recentMovements = await withOptionalSession(StockMovement.findOne({
-      productId: id,
-      date: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
-    }), session);
-
-    if (recentMovements) {
-      return res.status(400).json({ 
-        message: 'Impossible de supprimer un produit avec des mouvements récents' 
-      });
-    }
-
-    // Mettre à jour la catégorie
+    // 1. UPDATE CATEGORY & SUPPLIER COUNTS (Kima mta3ek)
     const category = await withOptionalSession(Category.findOne({ name: product.category }), session);
     if (category) {
       category.productCount = Math.max(0, (category.productCount || 0) - 1);
       await category.save(getSessionOptions(session));
     }
 
-    // Mettre à jour le fournisseur
     const supplier = await withOptionalSession(Supplier.findById(product.supplierId), session);
     if (supplier) {
       supplier.products = Math.max(0, (supplier.products || 0) - 1);
       await supplier.save(getSessionOptions(session));
     }
 
-    // Archiver les mouvements au lieu de les supprimer
+    // 2. ARCHIVE MOVEMENTS
     await StockMovement.updateMany(
       { productId: id },
-      { 
-        $set: { 
-          archived: true,
-          archivedAt: new Date(),
-          archivedBy: req.user?._id
-        }
-      },
+      { $set: { archived: true, archivedAt: new Date() } },
       getSessionOptions(session)
     );
 
-    // Soft delete du produit
+    // 3. REAL SOFT DELETE (C'est ça le secret)
+    product.isActive = false; 
     product.deletedAt = new Date();
     product.deletedBy = req.user?._id;
     product.status = 'deleted';
+    
     await product.save(getSessionOptions(session));
 
     await commitOptionalTransaction(session);
-
-    res.json({ 
-      message: 'Produit supprimé avec succès',
-      id: product._id
-    });
+    res.json({ success: true, message: 'Produit supprimé avec succès' });
     
   } catch (error) {
     await abortOptionalTransaction(session);
-    handleError(error, res, 'Erreur lors de la suppression du produit');
-    
+    res.status(500).json({ message: error.message });
   } finally {
     endOptionalSession(session);
   }
@@ -675,19 +647,61 @@ exports.updateStock = async (req, res) => {
 
 exports.validateOrder = async (req, res) => {
   try {
-    const order = await Order.findByIdAndUpdate(req.params.id, { status: 'validée' }, { new: true });
+    // 1. Récupérer la commande avec les détails des produits
+    const order = await Order.findById(req.params.id).populate('items.productId');
+    if (!order) return res.status(404).json({ message: "Commande non trouvée" });
 
-    // Houni t-zid el notification automatique daxel el DB
+    // 2. Mettre à jour le statut de la commande
+    order.status = 'validée';
+    await order.save();
+
+    // 3. Boucle sur chaque produit de la commande pour vérifier le stock
+    for (const item of order.items) {
+      const product = item.productId; // Grâce au populate
+
+      if (product) {
+        const currentStock = product.stock;
+
+        // --- LOGIC ALERTE STOCK (Kima t-heb enti) ---
+        
+        // A. Stock Faible (bin 0 et 5)
+        if (currentStock >= 0 && currentStock <= 5) {
+          await createNotification(
+            req.user?._id, // L'admin connecté
+            'stock_faible',
+            'Alerte: Stock Faible ⚠️',
+            `Le produit ${product.name} est faible (${currentStock}).`,
+            { productId: product._id, stock: currentStock },
+            'haute'
+          );
+        } 
+        // B. Rupture/Réappro (bin 6 et 10)
+        else if (currentStock >= 6 && currentStock <= 10) {
+          await createNotification(
+            req.user?._id,
+            'produit_epuise', // Type Rupture
+            'Alerte: Seuil de Réappro ❌',
+            `Le produit ${product.name} est à surveiller (${currentStock}).`,
+            { productId: product._id, stock: currentStock },
+            'moyenne'
+          );
+        }
+      }
+    }
+
+    // 4. Notification de validation (Client/Système)
     await createNotification(
-      order.user, // Id mta3 el client wala el admin
+      order.user,
       'commande_validee',
       'Commande Validée ✅',
-      `La commande #${order.orderNumber} a été confirmée avec succès.`,
+      `La commande #${order.orderNumber} a été confirmée.`,
       { orderId: order._id }
     );
 
     res.json({ success: true, data: order });
+
   } catch (error) {
+    console.error("Erreur validateOrder:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

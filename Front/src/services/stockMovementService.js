@@ -29,19 +29,28 @@ const stockMovementService = {
    * @returns {Promise<Object>} Mouvement créé et produit mis à jour
    */
   addEntry: async (data) => {
-    try {
-      const response = await api.post('/stock/entry', {
-        productId: data.productId,
-        quantity: parseInt(data.quantity),
-        reason: data.reason || 'purchase',
-        notes: data.note || ''
-      });
-      return response.data;
-    } catch (error) {
-      console.error('❌ Erreur addEntry:', error);
-      throw error;
-    }
-  },
+  try {
+    const response = await api.post('/stock/entry', {
+      productId: data.productId,
+      quantity: parseInt(data.quantity),
+      reason: data.reason || 'purchase',
+      note: data.note || '' // <--- Hna: na7ina el 's'
+    });
+    return response.data;
+  } catch (error) { /* ... */ }
+},
+
+addExit: async (data) => {
+  try {
+    const response = await api.post('/stock/exit', {
+      productId: data.productId,
+      quantity: parseInt(data.quantity),
+      reason: data.reason || 'sale',
+      note: data.note || '' // <--- Hna: na7ina el 's'
+    });
+    return response.data;
+  } catch (error) { /* ... */ }
+},
 
   /**
    * Ajoute une sortie de stock
@@ -52,20 +61,7 @@ const stockMovementService = {
    * @param {string} data.note - Note optionnelle
    * @returns {Promise<Object>} Mouvement créé et produit mis à jour
    */
-  addExit: async (data) => {
-    try {
-      const response = await api.post('/stock/exit', {
-        productId: data.productId,
-        quantity: parseInt(data.quantity),
-        reason: data.reason || 'sale',
-        notes: data.note || ''
-      });
-      return response.data;
-    } catch (error) {
-      console.error('❌ Erreur addExit:', error);
-      throw error;
-    }
-  },
+  
 
   /**
    * Supprime un mouvement de stock

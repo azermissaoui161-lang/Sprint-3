@@ -21,6 +21,9 @@ function MovementsPage() {
   const [prod, setProd] = useState([])
   const [supp, setSupp] = useState([])
 
+
+  
+
   // Filters
   const [f, setF] = useState({ movement: "all", date: "", searchProduct: "", startDate: "", endDate: "" })
   const [sdp, setSdp] = useState(false)
@@ -30,6 +33,12 @@ function MovementsPage() {
   const [mf, setMf] = useState({ productId: "", product: "", type: MV.IN, quantity: "", date: new Date().toISOString().split('T')[0], note: "" })
   const [fe, setFe] = useState({})
 
+
+  // supprimer 
+  const [deleteModal, setDeleteModal] = useState({
+  isOpen: false,
+  id: null
+})
   // Load data
   const loadData = useCallback(async () => {
     try {
@@ -98,17 +107,19 @@ function MovementsPage() {
     }
   }
 
-  const hdlDelMvRemote = async (id) => {
-    if (!window.confirm("Supprimer ?")) return
-    try {
-      await stockMovementService.delete(id)
-      await loadData()
-    } catch (error) {
-      window.alert(extractApiErrorMessage(error, "Impossible de supprimer le mouvement"))
-    }
+  const hdlDelMvRemote = async () => {
+  try {
+    await stockMovementService.delete(deleteModal.id)
+    await loadData()
+    setDeleteModal({ isOpen: false, id: null })
+  } catch (error) {
+    window.alert(extractApiErrorMessage(error, "Impossible de supprimer le mouvement"))
   }
+}
 
+ 
   return (
+    
     <div className="movements-tab">
       <header className="tab-header">
         <h2>🔄 Mouvements</h2>
@@ -153,7 +164,7 @@ function MovementsPage() {
               <td className={m.type === MV.IN ? "text-success" : "text-danger"}><strong>{m.quantity}</strong></td>
               <td className="movement-note">{m.note || "-"}</td>
               <td>{m.user}</td>
-              <td><button className="btn-icon" onClick={() => hdlDelMvRemote(m.id)}>🗑️</button></td>
+              <td><button className="btn-icon" onClick={() => setDeleteModal({ isOpen: true, id: m.id })}>🗑️</button></td>
             </tr>
           }) : <tr><td colSpan="9" className="no-data-row"><div className="no-data-message">Aucun mouvement</div></td></tr>}</tbody>
         </table>
@@ -170,7 +181,36 @@ function MovementsPage() {
         <FormField label="Note" id="mvmt-note"><textarea value={mf.note} onChange={e => setMf({ ...mf, note: e.target.value })} rows="2" /></FormField>
         {mf.productId && mf.type === MV.OUT && <div className="stock-warning">⚠️ Stock: {prod.find(p => String(p.id) === String(mf.productId))?.stock}</div>}
       </Modal>
+
+      {deleteModal.isOpen && (
+  <div className="modal-overlay" onClick={() => setDeleteModal({ isOpen: false, id: null })}>
+    <div className="modal-content modal-small" onClick={e => e.stopPropagation()}>
+      
+      <div className="modal-header">
+        <h3>⚠️ Confirmation</h3>
+        <button className="modal-close" onClick={() => setDeleteModal({ isOpen: false, id: null })}>×</button>
+      </div>
+
+      <div className="modal-body">
+        <p>Êtes-vous sûr de vouloir supprimer ce mouvement ?</p>
+        <p className="text-danger">Cette action est irréversible.</p>
+      </div>
+
+      <div className="modal-footer">
+        <button className="btn-secondary" onClick={() => setDeleteModal({ isOpen: false, id: null })}>
+          Annuler
+        </button>
+        <button className="btn-danger" onClick={hdlDelMvRemote}>
+          Supprimer
+        </button>
+      </div>
+
     </div>
+  </div>
+)}
+    </div>
+
+    
   )
 }
 

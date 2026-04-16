@@ -18,7 +18,7 @@ router.use(protect);
 router.get('/', getUserNotifications);           // ← Correction ici
 router.get('/unread-count', getUnreadCount);      // ← Nouvelle route
 router.put('/read-all', markAllAsRead);
-router.put('/:id/read', markAsRead);
+router.patch('/:id/read', markAsRead);
 router.delete('/all', deleteAllNotifications);    // ← Nouvelle route
 router.delete('/:id', deleteNotification);
 
